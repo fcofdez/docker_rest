@@ -32,5 +32,7 @@ func ServeDocker(w http.ResponseWriter, r *http.Request){
 
 func main() {
 	http.HandleFunc("/string", ServeDocker)
+	http.HandleFunc("/", serveDocker)
+	http.HandleFunc("/ws", serveWs)
 	http.ListenAndServe("localhost:4000", nil)
 }
