@@ -16,8 +16,9 @@ var homeTempl = template.Must(template.ParseFiles("home.html"))
 
 
 func CreateDockerCli() (* client.DockerCli, *bytes.Buffer){
-	unixsock := "/var/run/docker.sock"
-	defaultHost := fmt.Sprintf("unix://%s", unixsock)
+	// unixsock := "/var/run/docker.sock"
+	// defaultHost := fmt.Sprintf("unix://%s", unixsock)
+	defaultHost := "tcp://192.168.59.103:2375"
 	protoAddrParts := strings.SplitN(defaultHost, "://", 2)
 	bufOut := bytes.NewBuffer(nil)
 	bufErr := bytes.NewBuffer(nil)
@@ -26,12 +27,6 @@ func CreateDockerCli() (* client.DockerCli, *bytes.Buffer){
 
 
 func ServeDocker(w http.ResponseWriter, r *http.Request){
-	cli, _ := CreateDockerCli()
-	//queryParams := r.URL.Query()
-	//command := queryParams["command"][0]
-	//command_name := strings.Split(command, " ")
-
-	cli.CmdRun("ubuntu")//, command_name[0], command_name[1])
 
 	if r.URL.Path != "/" {
 		http.Error(w, "Not found", 404)
@@ -47,7 +42,7 @@ func ServeDocker(w http.ResponseWriter, r *http.Request){
 
 }
 
-type Test struct {
+type RequestParams struct {
 	Jsonrpc string
 	Method string
 	Params []string
@@ -56,20 +51,15 @@ type Test struct {
 
 func ServeCmd(w http.ResponseWriter, r *http.Request){
 	cli, bufOut := CreateDockerCli()
-	// queryParams := r.URL.Query()
-	// command := queryParams["command"][0]
-	// command_name := strings.Split(command, " ")
-	// cli.CmdRun("ubuntu", command_name[0], command_name[1])
-	//	fmt.Println(r)
-	var m Test
+	var m RequestParams
 
 	dec := json.NewDecoder(r.Body)
 	dec.Decode(&m)
-	fmt.Println(m.Method)
-	// fmt.Println(r.Body.String())
-	// a, _ := httputil.DumpRequest(r.Body, true)
-	// fmt.Println(string(a))
-	fmt.Fprintln(w, "holaa")
+	err := cli.CmdRun("ubuntu", m.Method, strings.Join(m.Params, " "))
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Fprintln(w, bufOut)
 
 }
 
